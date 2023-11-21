@@ -7,9 +7,9 @@ def parse(opt=None):
 
     ## Required parameters
 
-    parser.add_argument("--vocab_file", default=None, type=str, required=True,
+    parser.add_argument("--vocab_file", default="bert-base-ch/vocab.txt", type=str, required=True,
                         help="The vocabulary file that the BERT model was trained on.")
-    parser.add_argument("--output_dir", default=None, type=str, required=True,
+    parser.add_argument("--output_dir", default="bert-student", type=str, required=True,
                         help="The output directory where the model checkpoints will be written.")
 
     ## Other parameters
@@ -59,11 +59,11 @@ def parse(opt=None):
     parser.add_argument('--weight',type=float,default=1.0)
     parser.add_argument('--ckpt_frequency',type=int,default=2)
 
-    parser.add_argument('--tuned_checkpoint_T',type=str,default=None)
+    parser.add_argument('--tuned_checkpoint_T',type=str,default="examples/msra_ner_example/bert-base-ch/msra_teacher_model.pt")
     parser.add_argument('--tuned_checkpoint_S',type=str,default=None)
     parser.add_argument("--init_checkpoint_S", default=None, type=str)
-    parser.add_argument("--bert_config_file_T", default=None, type=str, required=True)
-    parser.add_argument("--bert_config_file_S", default=None, type=str, required=True)
+    parser.add_argument("--bert_config_file_T", default="examples/msra_ner_example/bert-base-ch/config.json", type=str, required=True)
+    parser.add_argument("--bert_config_file_S", default="bert_config_file_S", type=str, required=True)
     parser.add_argument("--temperature", default=1, type=float, required=False)
     parser.add_argument("--teacher_cached",action='store_true')
 

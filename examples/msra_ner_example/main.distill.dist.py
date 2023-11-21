@@ -4,6 +4,8 @@ import logging
 import os,random
 import numpy as np
 import torch
+from datasets import load_dataset
+
 from utils_ner import read_features, label2id_dict
 from utils import divide_parameters
 from transformers import ElectraConfig, AdamW, get_linear_schedule_with_warmup, get_constant_schedule_with_warmup, BertTokenizer
@@ -38,6 +40,36 @@ def args_check(logger, args):
     args.n_gpu = n_gpu
     args.device = device
     return device, n_gpu
+
+
+def tokenize_and_align_labels(examples, tokenizer):
+    tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
+
+    labels = []
+    for i, label in enumerate(examples[f"ner_tags"]):
+        word_ids = tokenized_inputs.word_ids(batch_index=i)
+        previous_word_idx = None
+        label_ids = []
+        for word_idx in word_ids:
+            # Special tokens have a word id that is None. We set the label to -100 so they are automatically
+            # ignored in the loss function.
+            if word_idx is None:
+                label_ids.append(-100)
+            # We set the label for the first token of each word.
+            elif word_idx != previous_word_idx:
+                label_ids.append(label[word_idx])
+            # For the other tokens in a word, we set the label to either the current label or -100, depending on
+            # the label_all_tokens flag.
+            else:
+                    # label_ids.append(label[word_idx] if label_all_tokens else -100)
+                    label_ids.append(label[word_idx])
+            previous_word_idx = word_idx
+
+        labels.append(label_ids)
+
+    tokenized_inputs["labels"] = labels
+    return tokenized_inputs
+
 
 def main():
     #parse arguments
@@ -88,13 +120,19 @@ def main():
     num_train_steps = None
 
     tokenizer = BertTokenizer(vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
-
+    datasets = load_dataset("msra_ner")
+    tokenized_datasets = datasets.map(tokenize_and_align_labels, batched=True)
     if args.local_rank not in [-1, 0]:
         torch.distributed.barrier()
     if args.do_train:
-        train_examples,train_dataset = read_features(args.train_file,max_seq_length=args.max_seq_length)
+        #train_examples,train_dataset = read_features(args.train_file,max_seq_length=args.max_seq_length)
+        train_dataset = tokenized_datasets["train"].remove_columns(['id', 'tokens', 'ner_tags'])
+        train_examples = train_dataset
+
     if args.do_predict:
-        eval_examples,eval_dataset = read_features(args.predict_file,max_seq_length=args.max_seq_length)
+        #eval_examples,eval_dataset = read_features(args.predict_file,max_seq_length=args.max_seq_length)
+        eval_dataset = tokenized_datasets["test"].remove_columns(['id', 'tokens', 'ner_tags'])
+        eval_examples = eval_dataset
 
     if args.local_rank == 0:
         torch.distributed.barrier()
