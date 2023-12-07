@@ -103,7 +103,7 @@ def main():
             _,_,model_class_T = MODEL_CLASSES[model_type_T]
             model_T = model_class_T(model_config_T, num_labels=num_labels)
             state_dict_T = torch.load(checkpoint_T,map_location='cpu')
-            missing_keys, un_keys = model_T.load_state_dict(state_dict_T,strict=True)
+            missing_keys, un_keys = model_T.load_state_dict(state_dict_T,strict=False)
             logger.info(f"Teacher Model {model_type_T} loaded")
             model_T.to(device)
 

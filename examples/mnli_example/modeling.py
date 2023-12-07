@@ -36,7 +36,8 @@ class BertForGLUESimple(nn.Module):
         self.apply(initializer)
 
     def forward(self, input_ids, attention_mask, token_type_ids, labels=None):
-        last_hidden_state, pooled_output, hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        last_hidden_state, pooled_output, hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids,
+                                                                    return_dict=False)
         output_for_cls = self.dropout(pooled_output)
         logits  = self.classifier(output_for_cls)  # output size: batch_size,num_labels
         #assert len(sequence_output)==self.bert.config.num_hidden_layers + 1  # embeddings + 12 hiddens
